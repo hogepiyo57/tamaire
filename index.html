@@ -119,7 +119,7 @@ const POLE_R = 0.10;           // ポールの半径 [m]
 // --- 投げる人 ---
 const HAND_Y = 1.5;            // 手元の高さ [m]
 const HAND_DX = 0.35;          // 体の位置から手元までの前方への水平距離 [m]
-const A_RANGE = [0.5, 8.0];    // Aが動ける体のx範囲 [m]
+const A_RANGE = [0.5, 9.0];    // Aが動ける体のx範囲 [m]
 const B_RANGE = [12.0, 19.5];  // Bが動ける体のx範囲 [m]
 const ANGLE_MIN = 5, ANGLE_MAX = 90;   // 角度の範囲 [度]
 const V_MAX = 22;              // 初速の上限 [m/s]
@@ -144,7 +144,8 @@ function sigmaAngle(angleDeg) {
   const s = Math.sin(2 * angleDeg * Math.PI / 180);
   return SIGMA_ANGLE_AT_VERTICAL + (SIGMA_ANGLE_AT_DIAGONAL - SIGMA_ANGLE_AT_VERTICAL) * s * s;
 }
-const DEFAULT_SIGMA_SPEED = 10.0; // 強さばらつきの標準偏差 [%]
+const DEFAULT_SIGMA_SPEED = 10.0; // 強さばらつきの標準偏差 [%]：強さが SIGMA_SPEED_REF のときの値
+const SIGMA_SPEED_REF = 10.0;   // 強く投げるほど誤差の割合が大きくなる（強さに比例：σ% = 上の値 × 強さ / この値）[m/s]
 const SIGMA_HAND_Y = 0.03;     // 手元の高さの誤差の標準偏差 [m]
 const SIGMA_HAND_X = 0.03;     // 発射位置（水平）の誤差の標準偏差 [m]
 const THROW_CORR = 0.3;        // 連続投擲で角度・強さの誤差が前の球と相関する度合い
@@ -196,7 +197,7 @@ function spawn(p) {
   p.zA = THROW_CORR * (p.zA || 0) + k * randn();
   p.zV = THROW_CORR * (p.zV || 0) + k * randn();
   const th = (p.angle + p.zA * sigmaAngle(p.angle)) * Math.PI / 180;
-  const v = p.speed * (1 + p.zV * settings.sigSpeed / 100);
+  const v = p.speed * (1 + p.zV * settings.sigSpeed * (p.speed / SIGMA_SPEED_REF) / 100);
   // 手元の位置の小さな誤差
   const noisy = true;
   const x = handX(p) + (noisy ? randn() * SIGMA_HAND_X : 0);
